@@ -5,6 +5,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace Akka.N2J.Host.Actors
 {
@@ -18,19 +19,24 @@ namespace Akka.N2J.Host.Actors
 		: ReceiveActor
 	{
 		/// <summary>
+		///		Regular expression for matching IPV6 addresses in end-point descriptions.
+		/// </summary>
+		static readonly Regex		_ipV6Matcher = new Regex(@"^:[\w|:]*:");
+
+		/// <summary>
 		///		Actors that print input from remote actor systems (keyed by remote end-point).
 		/// </summary>
-		readonly Dictionary<IPEndPoint, IActorRef>	_printHandlers = new Dictionary<IPEndPoint, IActorRef>();
+		readonly List<IActorRef>	_printHandlers = new List<IActorRef>();
 
 		/// <summary>
 		///		The Akka I/O TCP manager.
 		/// </summary>
-		IActorRef									_tcpManager;
+		IActorRef					_tcpManager;
 
 		/// <summary>
 		///		The connector's listener end-point.
 		/// </summary>
-		IPEndPoint									_listenerEndPoint;
+		IPEndPoint					_listenerEndPoint;
 
 		/// <summary>
 		///		Create a new <see cref="Connector"/> actor.
@@ -41,28 +47,78 @@ namespace Akka.N2J.Host.Actors
 			{
 				_listenerEndPoint = bound.LocalAddress as IPEndPoint;
 
-				Log.Verbose("Connection manager is now listening on {ListenEndPoint}.", _listenerEndPoint);
+				Log.Verbose("Connection manager is now listening on {ListenEndPoint}.", FormatEndPointIPv4(_listenerEndPoint));
             });
 
 			// Remote client has connected. For now, we just assume they're JVM Akka (little-endian).
 			Receive<Tcp.Connected>(connected =>
 			{
 				IPEndPoint remoteEndPoint = connected.RemoteAddress as IPEndPoint;
-				Log.Verbose("Connection manager is handling connection from {RemoteEndPoint}.", remoteEndPoint);
+				string remoteEndPointIPv4 = FormatEndPointIPv4(remoteEndPoint);
 
-				string handlerActorName = String.Format("{0}-{1}",
-					remoteEndPoint.Address.ToString().Replace('.', '-'),
-					remoteEndPoint.Port
+				Log.Verbose("Connection manager is handling connection from {RemoteEndPoint}.", remoteEndPointIPv4);
+
+				string handlerActorName = "printer-for-" + remoteEndPointIPv4;
+
+				IActorRef printHandler = Context.ActorOf(
+					Props.Create(
+						() => new Printer(remoteEndPoint)
+					),
+					handlerActorName
 				);
-				IActorRef printHandler = Context.ActorOf<Printer>(handlerActorName);
-				_printHandlers.Add(remoteEndPoint, printHandler);
+				_printHandlers.Add(printHandler);
+
+				Context.Watch(printHandler);
 
 				Sender.Tell(
 					new Tcp.Register(printHandler)
 				);
             });
 
-			// TODO: Handle client disconnection.
+			// Client has been disconnected.
+			Receive<Disconnected>(disconnected =>
+			{
+				Log.Verbose(
+					"Connection manager is handling disconnection from {RemoteEndPoint}.",
+					FormatEndPointIPv4(disconnected.RemoteEndPoint)
+				);
+
+				IActorRef printer = Sender;
+				if (!_printHandlers.Contains(printer))
+				{
+					Log.Warning(
+						"Connection manager received disconnection notice for unknown end-point {RemoteEndPoint}.",
+						FormatEndPointIPv4(disconnected.RemoteEndPoint)
+					);
+
+					return;
+				}
+
+				printer.Tell(PoisonPill.Instance); // Like tears in rain, time to die.
+			});
+
+			// A Printer actor has been terminated.
+			Receive<Terminated>(terminated =>
+			{
+				IActorRef printer = _printHandlers.Find(handler => handler.Path == Sender.Path);
+				if (printer == null)
+				{
+					Log.Warning(
+						"Connection manager was notified of termination for unknown child actor '{TerminatedActorName}'.",
+						terminated.ActorRef.Path.ToStringWithoutAddress()
+					);
+
+					Unhandled(terminated);
+
+					return;
+				}
+
+				Log.Verbose(
+					"Connection manager is handling termination of child actor '{TerminatedActorName}'.",
+					terminated.ActorRef.Path.Name
+				);
+				_printHandlers.Remove(printer);
+			});
 		}
 
 		/// <summary>
@@ -72,10 +128,7 @@ namespace Akka.N2J.Host.Actors
 		{
 			base.PreStart();
 
-			// TODO: Start listening.
-			Config configuration = ConfigurationFactory.Load();
-
-			int listenPort = configuration.GetInt("connector.listen.port");
+			int listenPort = ConfigurationFactory.Load().GetInt("connector.listen.port");
 
 			_tcpManager = Context.System.Tcp();
 			_tcpManager.Tell(
@@ -88,5 +141,56 @@ namespace Akka.N2J.Host.Actors
 				)
 			);
         }
+
+		/// <summary>
+		///		Format an end-point as IPv4 only (strip out the IPv6 address if required).
+		/// </summary>
+		/// <param name="endPoint">
+		///		The end-point.
+		/// </param>
+		/// <returns>
+		///		A string representation of the end-point, using IPv4 only.
+		/// </returns>
+		/// <remarks>
+		///		For some reason <see cref="IPAddress.Loopback"/> still winds up being an IPv6 address. For the purposes of this demo, do not want.
+		/// </remarks>
+		static string FormatEndPointIPv4(IPEndPoint endPoint)
+		{
+			if (endPoint == null)
+				throw new ArgumentNullException("endPoint");
+
+			return String.Format("{0}:{1}",
+				_ipV6Matcher.Replace(
+					endPoint.Address.ToString(),
+					String.Empty
+				),
+				endPoint.Port
+			);
+		}
+
+		/// <summary>
+		///		Message indicating that a remote connection was closed.
+		/// </summary>
+		public sealed class Disconnected
+		{
+			/// <summary>
+			///		Create a new <see cref="Disconnected"/> message
+			/// </summary>
+			/// <param name="remoteEndPoint">
+			///		The remote end-point that was disconnected.
+			/// </param>
+			public Disconnected(IPEndPoint remoteEndPoint)
+			{
+				if (remoteEndPoint == null)
+					throw new ArgumentNullException("remoteEndPoint");
+
+				RemoteEndPoint = remoteEndPoint;
+			}
+
+			/// <summary>
+			///		The remote end-point that was disconnected.
+			/// </summary>
+			public IPEndPoint RemoteEndPoint { get; }
+		}
 	}
 }

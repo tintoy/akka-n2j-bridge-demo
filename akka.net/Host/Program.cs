@@ -55,7 +55,7 @@ namespace Akka.N2J.Host
 
 			Log.Logger =
 				new LoggerConfiguration()
-					.MinimumLevel.Information()
+					.MinimumLevel.Verbose()
 					.Enrich.WithProcessId()
 					.Enrich.WithThreadId()
 					.WriteTo.Trace(outputTemplate: logTemplate)

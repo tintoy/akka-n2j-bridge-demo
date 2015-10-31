@@ -2,6 +2,7 @@
 using Akka.IO;
 using Serilog;
 using System;
+using System.Net;
 using System.Text;
 
 namespace Akka.N2J.Host.Actors
@@ -15,8 +16,14 @@ namespace Akka.N2J.Host.Actors
 		/// <summary>
 		///		Create a new <see cref="Printer"/> actor.
 		/// </summary>
-		public Printer()
+		/// <param name="remoteEndPoint">
+		///		The remote end-point whose messages are being printed.
+		/// </param>
+		public Printer(IPEndPoint remoteEndPoint)
 		{
+			if (remoteEndPoint == null)
+				throw new ArgumentNullException("remoteEndPoint");
+
 			Receive<Tcp.Received>(received =>
 			{
 				string message = received.Data
@@ -28,6 +35,15 @@ namespace Akka.N2J.Host.Actors
 					Self.Path.Name,
 					message
 				);
+			});
+
+			// Connection closed.
+			Receive<Tcp.ConnectionClosed>(_ =>
+			{
+				// Tell the connection manager that we're done.
+				Context.Parent.Tell(
+					new Connector.Disconnected(remoteEndPoint)
+                );
 			});
 		}
 	}
