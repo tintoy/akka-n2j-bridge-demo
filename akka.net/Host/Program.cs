@@ -1,4 +1,5 @@
 ﻿using Akka.Actor;
+using Akka.N2J.Host.Actors;
 using Serilog;
 using System;
 using System.Threading;
@@ -24,6 +25,11 @@ namespace Akka.N2J.Host
 			{
 				using (ActorSystem actorSystem = ActorSystem.Create("Akka-CLR"))
 				{
+					// Create the actor that incoming connections and assigns them to printers.
+					actorSystem.ActorOf<Connector>(
+						name: "connections"
+					);
+
 					Log.Information("Actor system started (press enter to terminate).");
 					Console.ReadLine();
 
