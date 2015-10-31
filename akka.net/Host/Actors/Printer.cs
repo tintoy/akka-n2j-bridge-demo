@@ -38,12 +38,33 @@ namespace Akka.N2J.Host.Actors
 			});
 
 			// Connection closed.
-			Receive<Tcp.ConnectionClosed>(_ =>
+			Receive<Tcp.ConnectionClosed>(connectionClosed =>
 			{
+				Log.Information(
+					"Printer '{ActorName}' connection was closed: @{ConnectionClosed}.",
+					Self.Path.Name,
+					connectionClosed
+				);
+
 				// Tell the connection manager that we're done.
 				Context.Parent.Tell(
 					new Connector.Disconnected(remoteEndPoint)
                 );
+			});
+			
+			// Connection closed with error.
+			Receive<Tcp.ErrorClosed>(closedWithError =>
+			{
+				Log.Information(
+					"Printer '{ActorName}' connection was closed: {@ConnectionClosed}.",
+					Self.Path.Name,
+					closedWithError
+				);
+
+				// Tell the connection manager that we're done.
+				Context.Parent.Tell(
+					new Connector.Disconnected(remoteEndPoint)
+				);
 			});
 		}
 	}

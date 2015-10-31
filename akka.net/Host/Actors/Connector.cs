@@ -135,7 +135,7 @@ namespace Akka.N2J.Host.Actors
 				new Tcp.Bind(
 					handler: Self,
 					localAddress: new IPEndPoint(
-						IPAddress.Loopback, // local-only for now
+						IPAddress.Any,
 						listenPort
 					)
 				)
