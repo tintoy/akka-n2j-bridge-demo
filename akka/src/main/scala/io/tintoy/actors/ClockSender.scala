@@ -1,11 +1,13 @@
 package io.tintoy.actors
 
-import java.net.InetSocketAddress
-import java.time.Clock
 import akka.actor.{ActorRef, Cancellable, Actor}
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
+
 import com.typesafe.config.{ConfigFactory, Config}
+
+import java.net.InetSocketAddress
+import java.time.Clock
 
 import scala.concurrent.duration.DurationInt
 
