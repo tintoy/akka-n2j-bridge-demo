@@ -50,7 +50,7 @@ namespace Akka.N2J.Host.Actors
 				Log.Verbose("Connection manager is now listening on {ListenEndPoint}.", FormatEndPointIPv4(_listenerEndPoint));
             });
 
-			// Remote client has connected. For now, we just assume they're JVM Akka (little-endian).
+			// Remote client has connected. For now, we just assume they're JVM Akka (big-endian).
 			Receive<Tcp.Connected>(connected =>
 			{
 				IPEndPoint remoteEndPoint = connected.RemoteAddress as IPEndPoint;
