@@ -12,13 +12,16 @@ libraryDependencies ++= {
 
   Seq(
     // Support for async / await. 
-    "org.scala-lang.modules"  %% "scala-async"  % scalaAsyncVersion,
+    "org.scala-lang.modules"  %% "scala-async"              % scalaAsyncVersion,
     
     // Akka
-    "com.typesafe.akka"       %% "akka-actor"   % akkaVersion,
-    "com.typesafe.akka"       %% "akka-testkit" % akkaVersion       % "test",
+    "com.typesafe.akka"       %% "akka-actor"               % akkaVersion,
+    "com.typesafe.akka"       %% "akka-testkit"             % akkaVersion       % "test",
+
+    // Akka Streams
+    "com.typesafe.akka"       %% "akka-stream-experimental" % akkaStreamsVersion,
     
     // ScalaTest
-    "org.scalatest"           %% "scalatest"    % scalaTestVersion  % "test"
+    "org.scalatest"           %% "scalatest"                % scalaTestVersion  % "test"
   )
 }
