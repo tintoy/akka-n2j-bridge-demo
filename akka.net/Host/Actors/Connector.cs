@@ -24,7 +24,7 @@ namespace Akka.N2J.Host.Actors
 		static readonly Regex		_ipV6Matcher = new Regex(@"^:[\w|:]*:");
 
 		/// <summary>
-		///		Actors that print input from remote actor systems (keyed by remote end-point).
+		///		Actors that print input from remote actor systems.
 		/// </summary>
 		readonly List<IActorRef>	_printHandlers = new List<IActorRef>();
 
