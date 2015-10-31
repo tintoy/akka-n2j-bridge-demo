@@ -6,7 +6,7 @@ import scala.annotation.tailrec
 
 /**
  * Helper functions for parsing Akka streams.
- * @note AF: The next step is to produce a similar processing stage that instead splits by looking for length prefixes.
+ * @note Actually this won't be needed now. See [[akka.stream.io.Framing.lengthField]] / [[akka.stream.io.Framing.simpleFramingProtocol]].
  */
 object StreamParsers {
   /**
