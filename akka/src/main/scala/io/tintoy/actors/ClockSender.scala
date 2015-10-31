@@ -82,7 +82,7 @@ class ClockSender extends Actor {
       println("Sending: " + time)
 
       client ! Tcp.Write(
-        ByteString.fromString(time, charset = "utf8")
+        ByteString(time, ByteString.UTF_8)
       )
   }
 
