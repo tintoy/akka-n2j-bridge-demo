@@ -84,8 +84,6 @@ class FramedTcpClient(
   def readPrefix(): Option[Int] = {
     assert(!haveFrameSize, "Cannot read prefix while there is a current frame")
 
-    // Ok, my ignorance of the framework is showing here.
-    // I'm assuming there's at least one class for doing this sort of bit-twiddling shit.
     if (buffer.size >= 4) {
       currentFrameSize = Some({
         val bits = BitVector(
