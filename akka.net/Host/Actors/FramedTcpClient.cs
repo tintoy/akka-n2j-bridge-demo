@@ -9,7 +9,7 @@ namespace Akka.N2J.Host.Actors
 	/// <summary>
 	///		Actor that encodes / decodes framed message data that it exchanges with a TCP client actor.
 	/// </summary>
-	public sealed class TcpCodec
+	public sealed class FramedTcpClient
 		: ReceiveActor
 	{
 		#region Constants
@@ -39,7 +39,7 @@ namespace Akka.N2J.Host.Actors
 		#region Instance data
 
 		/// <summary>
-		///		Given that the <see cref="TcpCodec"/> is on a CLR that uses big-endian or little endian format, should it expect remote data to be in the other format (little-endian or big-endian)?
+		///		Given that the <see cref="FramedTcpClient"/> is on a CLR that uses big-endian or little endian format, should it expect remote data to be in the other format (little-endian or big-endian)?
 		/// </summary>
 		readonly bool		_isOtherEndian;
 
@@ -59,7 +59,7 @@ namespace Akka.N2J.Host.Actors
 		readonly IPEndPoint	_remoteEndPoint;
 
 		/// <summary>
-		///		The maximum permitted size (in bytes) for any frame transmitted or received by the <see cref="TcpCodec"/>.
+		///		The maximum permitted size (in bytes) for any frame transmitted or received by the <see cref="FramedTcpClient"/>.
 		/// </summary>
 		readonly int		_maxFrameSize;
 
@@ -78,7 +78,7 @@ namespace Akka.N2J.Host.Actors
 		#region Construction
 
 		/// <summary>
-		///		Create a new <see cref="TcpCodec"/> actor.
+		///		Create a new <see cref="FramedTcpClient"/> actor.
 		/// </summary>
 		/// <param name="receiver">
 		///		The actor to which received message frames should be forwarded.
@@ -90,12 +90,12 @@ namespace Akka.N2J.Host.Actors
 		///		The remote end-point represented by the TCP client.
 		/// </param>
 		/// <param name="isOtherEndian">
-		///		Given that the <see cref="TcpCodec"/> is on a CLR that uses big-endian or little endian format, should it expect remote data to be in the other format (little-endian or big-endian)?
+		///		Given that the <see cref="FramedTcpClient"/> is on a CLR that uses big-endian or little endian format, should it expect remote data to be in the other format (little-endian or big-endian)?
 		/// </param>
 		/// <param name="maxFrameSize">
-		///		The maximum permitted size (in bytes) for any frame transmitted or received by the <see cref="TcpCodec"/>.
+		///		The maximum permitted size (in bytes) for any frame transmitted or received by the <see cref="FramedTcpClient"/>.
 		/// </param>
-		public TcpCodec(IActorRef receiver, IActorRef tcpClient, IPEndPoint remoteEndPoint, bool isOtherEndian, int maxFrameSize)
+		public FramedTcpClient(IActorRef receiver, IActorRef tcpClient, IPEndPoint remoteEndPoint, bool isOtherEndian, int maxFrameSize)
 		{
 			if (receiver == null)
 				throw new ArgumentNullException("receiver");
@@ -139,7 +139,7 @@ namespace Akka.N2J.Host.Actors
 		#region States
 
 		/// <summary>
-		///		The <see cref="TcpCodec"/> is waiting to receive the length of the next frame.
+		///		The <see cref="FramedTcpClient"/> is waiting to receive the length of the next frame.
 		/// </summary>
 		void WaitForFrameLength()
 		{
@@ -165,7 +165,7 @@ namespace Akka.N2J.Host.Actors
 		}
 
 		/// <summary>
-		///		The <see cref="TcpCodec"/> is waiting for the rest of the data comprising the current frame.
+		///		The <see cref="FramedTcpClient"/> is waiting for the rest of the data comprising the current frame.
 		/// </summary>
 		void WaitForRestOfFrame()
 		{
@@ -259,7 +259,7 @@ namespace Akka.N2J.Host.Actors
 		#region Props
 
 		/// <summary>
-		///		Create the <see cref="Actor.Props"/> for a <see cref="TcpCodec"/> actor that expects data in little-endian format.
+		///		Create the <see cref="Actor.Props"/> for a <see cref="FramedTcpClient"/> actor that expects data in little-endian format.
 		/// </summary>
 		/// <param name="receiver">
 		///		The actor to which received message frames should be forwarded.
@@ -271,7 +271,7 @@ namespace Akka.N2J.Host.Actors
 		///		The remote end-point represented by the TCP client.
 		/// </param>
 		/// <param name="maxFrameSize">
-		///		The maximum permitted size (in bytes) for any frame transmitted or received by the <see cref="TcpCodec"/>.
+		///		The maximum permitted size (in bytes) for any frame transmitted or received by the <see cref="FramedTcpClient"/>.
 		/// </param>
 		public static Props LittleEndian(IActorRef receiver, IActorRef tcpClient, IPEndPoint remoteEndPoint, int? maxFrameSize = null)
 		{
@@ -279,7 +279,7 @@ namespace Akka.N2J.Host.Actors
 		}
 
 		/// <summary>
-		///		Create the <see cref="Actor.Props"/> for a <see cref="TcpCodec"/> actor that expects data in big-endian format.
+		///		Create the <see cref="Actor.Props"/> for a <see cref="FramedTcpClient"/> actor that expects data in big-endian format.
 		/// </summary>
 		/// <param name="receiver">
 		///		The actor to which received message frames should be forwarded.
@@ -291,7 +291,7 @@ namespace Akka.N2J.Host.Actors
 		///		The remote end-point represented by the TCP client.
 		/// </param>
 		/// <param name="maxFrameSize">
-		///		The maximum permitted size (in bytes) for any frame transmitted or received by the <see cref="TcpCodec"/>.
+		///		The maximum permitted size (in bytes) for any frame transmitted or received by the <see cref="FramedTcpClient"/>.
 		/// </param>
 		public static Props BigEndian(IActorRef receiver, IActorRef tcpClient, IPEndPoint remoteEndPoint, int? maxFrameSize = null)
 		{
@@ -299,7 +299,7 @@ namespace Akka.N2J.Host.Actors
 		}
 
 		/// <summary>
-		///		Create the <see cref="Actor.Props"/> for a <see cref="TcpCodec"/> actor that expects data in big-endian format.
+		///		Create the <see cref="Actor.Props"/> for a <see cref="FramedTcpClient"/> actor that expects data in big-endian format.
 		/// </summary>
 		/// <param name="receiver">
 		///		The actor to which received message frames should be forwarded.
@@ -311,10 +311,10 @@ namespace Akka.N2J.Host.Actors
 		///		The remote end-point represented by the TCP client.
 		/// </param>
 		/// <param name="maxFrameSize">
-		///		The maximum permitted size (in bytes) for any frame transmitted or received by the <see cref="TcpCodec"/>.
+		///		The maximum permitted size (in bytes) for any frame transmitted or received by the <see cref="FramedTcpClient"/>.
 		/// </param>
 		/// <param name="endian">
-		///		Should the <see cref="TcpCodec"/> expect remote data to be little-endian or big-endian?
+		///		Should the <see cref="FramedTcpClient"/> expect remote data to be little-endian or big-endian?
 		/// </param>
 		static Props Props(IActorRef receiver, IActorRef tcpClient, IPEndPoint remoteEndPoint, Endian endian, int? maxFrameSize = null)
 		{
@@ -340,7 +340,7 @@ namespace Akka.N2J.Host.Actors
 			}
 
 			return Actor.Props.Create(
-				() => new TcpCodec(receiver, tcpClient, remoteEndPoint, isOtherEndian, maxFrameSize ?? DefaultMaxFrameSize)
+				() => new FramedTcpClient(receiver, tcpClient, remoteEndPoint, isOtherEndian, maxFrameSize ?? DefaultMaxFrameSize)
 			);
 		}
 

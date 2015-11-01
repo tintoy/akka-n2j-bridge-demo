@@ -14,10 +14,10 @@ namespace Akka.N2J.Tests
 	using AkkaTestKit = TestKit.VsTest.TestKit;
 
 	/// <summary>
-	///		Test suite for <see cref="TcpCodec"/> actor.
+	///		Test suite for <see cref="FramedTcpClient"/> actor.
 	/// </summary>
 	[TestClass]
-	public class TcpCodecTests
+	public class FramedTcpClientTests
 		: AkkaTestKit
 	{
 		/// <summary>
@@ -30,7 +30,7 @@ namespace Akka.N2J.Tests
 		}
 
 		/// <summary>
-		///		When supplied with data that contains exactly 1 frame (in little-endian format), the <see cref="TcpCodec"/> actor should emit exactly 1 <see cref="TcpCodec.ReceivedFrame"/> notification.
+		///		When supplied with data that contains exactly 1 frame (in little-endian format), the <see cref="FramedTcpClient"/> actor should emit exactly 1 <see cref="FramedTcpClient.ReceivedFrame"/> notification.
 		/// </summary>
 		[TestMethod]
 		public void Emit_Single_Frame_LittleEndian()
@@ -41,7 +41,7 @@ namespace Akka.N2J.Tests
 			TestProbe tcpClient = CreateTestProbe("tcp-client");
 
 			IActorRef tcpCodec = ActorOf(
-				TcpCodec.LittleEndian(
+				FramedTcpClient.LittleEndian(
 					receiver,
 					tcpClient,
 					new IPEndPoint(IPAddress.Loopback, 19123)
@@ -59,8 +59,8 @@ namespace Akka.N2J.Tests
 				new Tcp.Received(testFrame)
 			);
 
-			TcpCodec.ReceivedFrame receivedFrame =
-				receiver.ExpectMsg<TcpCodec.ReceivedFrame>(
+			FramedTcpClient.ReceivedFrame receivedFrame =
+				receiver.ExpectMsg<FramedTcpClient.ReceivedFrame>(
 					duration: TimeSpan.FromMilliseconds(500)
 				);
 
@@ -70,14 +70,14 @@ namespace Akka.N2J.Tests
 			int expectedFrameSize = BitConverter.ToInt32(
 				testFrame.Slice(
 					from: 0,
-					until: TcpCodec.FrameLengthPrefixSize
+					until: FramedTcpClient.FrameLengthPrefixSize
 				).ToArray(),
 				startIndex: 0
 			);
 			Assert.AreEqual(expectedFrameSize, receivedFrame.Frame.Count);
 
 			// Validate frame data.
-			ByteString expectedFrame = testFrame.Drop(TcpCodec.FrameLengthPrefixSize);
+			ByteString expectedFrame = testFrame.Drop(FramedTcpClient.FrameLengthPrefixSize);
 			Assert.IsTrue(
 				// ByteString GetEnumerator and Equals are not currently implemented, so we have to resort to this ugly fuckery.
 				expectedFrame.ToArray().SequenceEqual(

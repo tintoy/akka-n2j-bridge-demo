@@ -19,11 +19,6 @@ namespace Akka.N2J.Host.Actors
 		: ReceiveActor
 	{
 		/// <summary>
-		///		Regular expression for matching IPV6 addresses in end-point descriptions.
-		/// </summary>
-		static readonly Regex		_ipV6Matcher = new Regex(@"^:[\w|:]*:");
-
-		/// <summary>
 		///		Actors that print input from remote actor systems.
 		/// </summary>
 		readonly List<IActorRef>	_printHandlers = new List<IActorRef>();
@@ -143,7 +138,7 @@ namespace Akka.N2J.Host.Actors
         }
 
 		/// <summary>
-		///		Format an end-point as IPv4 only (strip out the IPv6 address if required).
+		///		Format an end-point as IPv4 only (strip out the IPv6 component if required).
 		/// </summary>
 		/// <param name="endPoint">
 		///		The end-point.
@@ -151,19 +146,13 @@ namespace Akka.N2J.Host.Actors
 		/// <returns>
 		///		A string representation of the end-point, using IPv4 only.
 		/// </returns>
-		/// <remarks>
-		///		For some reason <see cref="IPAddress.Loopback"/> still winds up being an IPv6 address. For the purposes of this demo, do not want.
-		/// </remarks>
 		static string FormatEndPointIPv4(IPEndPoint endPoint)
 		{
 			if (endPoint == null)
 				throw new ArgumentNullException("endPoint");
 
 			return String.Format("{0}:{1}",
-				_ipV6Matcher.Replace(
-					endPoint.Address.ToString(),
-					String.Empty
-				),
+				endPoint.Address.MapToIPv4(),
 				endPoint.Port
 			);
 		}
