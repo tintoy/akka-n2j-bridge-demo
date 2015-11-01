@@ -5,7 +5,6 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Text.RegularExpressions;
 
 namespace Akka.N2J.Host.Actors
 {

@@ -1,10 +1,13 @@
 package io.tintoy.actors
 
-import akka.actor.{Props, ActorRef, Actor}
+import akka.actor.{ActorRef, Actor}
 import akka.io.Tcp
+import akka.util.ByteString
+
+import scodec.bits.BitVector
 
 import FramedTcpClient._
-import akka.util.ByteString
+
 /**
  * Actor that exchanges framed message data with a TCP client actor.
  * @param target The actor with which unframed messages are exchanged.
@@ -85,12 +88,11 @@ class FramedTcpClient(
     // I'm assuming there's at least one class for doing this sort of bit-twiddling shit.
     if (buffer.size >= 4) {
       currentFrameSize = Some({
-        var frameSize = buffer(0).toInt
-        frameSize += buffer(1).toInt << 8
-        frameSize += buffer(2).toInt << 16
-        frameSize += buffer(3).toInt << 32
+        val bits = BitVector(
+          buffer.slice(0, 4).iterator
+        )
 
-        frameSize
+        Codecs.BigEndian.frameSize.decode(bits).require.value
       })
 
       buffer = buffer.drop(4)
@@ -158,4 +160,32 @@ object FramedTcpClient {
    * @param frame The frame data.
    */
   case class FrameReceived(frame: ByteString)
+
+  /**
+   * Binary formatting facilities.
+   */
+  object Codecs {
+    import scodec.Codec
+
+    /**
+     * Big-endian binary-formatting facilities.
+     */
+    object BigEndian {
+      /**
+       * Big-endian formatting for frame-size prefix.
+       */
+      val frameSize: Codec[Int] = scodec.codecs.int32
+    }
+
+    /**
+     * Little-endian binary-formatting facilities.
+     */
+    object LittleEndian {
+      /**
+       * Little-endian formatting for frame-size prefix.
+       */
+      val frameSize: Codec[Int] = scodec.codecs.int32L
+    }
+  }
 }
+
