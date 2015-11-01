@@ -1,7 +1,7 @@
 package io.tintoy.utilities.streaming
 
 import akka.stream.stage._
-import akka.util.ByteString
+import akka.util.{ByteIterator, ByteString}
 import scala.annotation.tailrec
 
 /**
