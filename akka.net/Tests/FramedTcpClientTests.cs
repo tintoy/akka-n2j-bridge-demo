@@ -7,10 +7,10 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 
 namespace Akka.N2J.Tests
 {
-	using System.Text;
 	using AkkaTestKit = TestKit.VsTest.TestKit;
 
 	/// <summary>
